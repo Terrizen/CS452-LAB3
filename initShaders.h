@@ -1,148 +1,128 @@
 #ifndef INITSHADERS_H_
 #define INITSHADERS_H_
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#endif
+
+#include "GL/glew.h"
+#include "GL/freeglut.h"
+#include "GL/gl.h"
+#include "GL/glu.h"
 
 #include <vector>
 #include <cstdio>
 #include <iostream>
 using namespace std;
 
-GLuint createShader(GLenum type, const GLchar* shadeSource);
-const GLchar* inputShader(const char* filename);
-GLuint createProgram(const vector<GLuint> shadeList);
-void transform(GLuint program);
-
+GLuint createShader(GLenum type, const GLchar* shade_source);
+const GLchar* inputShader(const char* file_name);
+GLuint createProgram(const vector<GLuint> shade_list);
 
 typedef struct{
   GLenum type;
-  const char* filename;
+  const char* file_name;
 } ShaderInfo;
 
 
-GLuint initShaders(ShaderInfo* shaders){
-
+void initShaders(ShaderInfo* shaders){
+  
   ShaderInfo* shade=shaders;
-
-  vector<GLuint> shadeList;
-
+  vector<GLuint> Shade_list;
+  
   while(shade->type != GL_NONE){
-    shadeList.push_back(createShader(shade->type,inputShader(shade->filename)));
+    Shade_list.push_back(createShader(shade->type,inputShader(shade->file_name)));
     ++shade;
   }
-
-  GLuint program=createProgram(shadeList);
-
-        glUseProgram(program);
-
-  glm::mat4 view;
-  view = glm::lookAt(
-         glm::vec3(0.0f, 0.0f, 50.0f),
-         glm::vec3(0.0f, 0.0f, 0.0f),
-         glm::vec3(0.0f, 1.0f, 0.0f)
-    );
-  GLint tempLoc = glGetUniformLocation(program, "viewMatrix");
-  glUniformMatrix4fv(tempLoc, 1, GL_FALSE, &view[0][0]);
-
-  glm::mat4 mainProjMatrix;
-  mainProjMatrix = glm::perspective(57.0,1.0,.1,500.0);
-  tempLoc = glGetUniformLocation(program, "Matrix");
-  glUniformMatrix4fv(tempLoc, 1, GL_FALSE, &mainProjMatrix[0][0]);
-
-  return program;
-
+  
+  GLuint program=createProgram(Shade_list);
+  
+  glUseProgram(program);
 }
 
-const GLchar* inputShader(const char* filename){
 
-  FILE* fshade = fopen(filename, "rb");
+const GLchar* inputShader(const char* file_name){
 
+  FILE* fshade = fopen(file_name, "rb");
+  
   if(!fshade){
-    fprintf(stderr,"unable to open file '%s'\n",filename);
+    fprintf(stderr,"unable to open file '%s'\n",file_name);
     return NULL;
   }
-
+  
   fseek(fshade, 0, SEEK_END);
-  long filesize=ftell(fshade);
+  long file_size=ftell(fshade);
   fseek(fshade, 0, SEEK_SET);
-
-
-  GLchar* shadingSource= new GLchar[filesize+1];
-  fread(shadingSource, 1, filesize, fshade);
-
-
+  
+  
+  GLchar* shading_source= new GLchar[file_size+1];
+  fread(shading_source, 1, file_size, fshade);
+  
+  
   if(ftell(fshade) == 0){
-    fprintf(stderr, "File '%s' is empty.\n",filename);
+    fprintf(stderr, "File '%s' is empty.\n",file_name);
     return NULL;
   }
 
   fclose(fshade);
-
-  shadingSource[filesize] = 0;
-
-  return const_cast<const GLchar*>(shadingSource);
-
+  
+  shading_source[file_size] = 0;
+  
+  return const_cast<const GLchar*>(shading_source);
+  
 }
 
-GLuint createShader(GLenum type, const GLchar* shadeSource){
 
+GLuint createShader(GLenum type, const GLchar* shade_source){
+  
   GLuint shader = glCreateShader(type);
-  glShaderSource(shader, 1, &shadeSource, NULL);
-
+  glShaderSource(shader, 1, &shade_source, NULL);
+  
   glCompileShader(shader);
-
+  
   GLint compileStatus;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
-
+  
   if(!compileStatus){
-    GLint logSize;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-
-    GLchar* infoLog = new GLchar[logSize+1];
-    glGetShaderInfoLog(shader,logSize,&logSize,infoLog);
-
-    const char *shadeInfo= NULL;
+    GLint log_size;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_size);
+    
+    GLchar* info_log = new GLchar[log_size+1];
+    glGetShaderInfoLog(shader,log_size,&log_size,info_log);
+    
+    const char *shade_info= NULL;
     switch(type){
-      case GL_VERTEX_SHADER: shadeInfo = "vertex"; break;
-      case GL_GEOMETRY_SHADER_EXT: shadeInfo = "geometric"; break;
-      case GL_FRAGMENT_SHADER: shadeInfo = "fragment"; break;
+      case GL_VERTEX_SHADER: shade_info = "vertex"; break;
+      case GL_GEOMETRY_SHADER_EXT: shade_info = "geometric"; break;
+      case GL_FRAGMENT_SHADER: shade_info = "fragment"; break;
     }
-    fprintf(stderr,"\nCompile failure in %u shader: %s\n Error message:\n%s\n",type,shadeInfo,infoLog);
-    delete[] infoLog;
+    fprintf(stderr,"\nCompile failure in %u shader: %s\n Error message:\n%s\n",type,shade_info,info_log);
+    delete[] info_log;
   }
   return shader;
 }
 
-GLuint createProgram(const vector<GLuint> shadeList){
+GLuint createProgram(const vector<GLuint> shade_list){
 
   GLuint program = glCreateProgram();
-
-  for(GLuint i=0;i<shadeList.size();i++){glAttachShader(program,shadeList[i]);}
-
+  
+  for(GLuint i=0;i<shade_list.size();i++){glAttachShader(program,shade_list[i]);}
+  
   glBindAttribLocation(program, 0, "in_position");
   glBindAttribLocation(program, 1, "in_color");
   glLinkProgram(program);
-
-  GLint linkStatus;
-  glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-
-  if(!linkStatus){
-    GLint logSize;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
-
-    GLchar *infoLog = new GLchar[logSize+1];
-    glGetProgramInfoLog(program,logSize,&logSize,infoLog);
-
-    fprintf(stderr,"\nShader linking failed: %s\n",infoLog);
-    delete[] infoLog;
-
-    for(GLuint i=0;i<shadeList.size();i++){glDeleteShader(shadeList[i]);}
+  
+  GLint link_status;
+  glGetProgramiv(program, GL_LINK_STATUS, &link_status);
+  
+  if(!link_status){
+    GLint log_size;
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_size);
+    
+    GLchar *info_log = new GLchar[log_size+1];
+    glGetProgramInfoLog(program,log_size,&log_size,info_log);
+    
+    fprintf(stderr,"\nShader linking failed: %s\n",info_log);
+    delete[] info_log;
+    
+    for(GLuint i=0;i<shade_list.size();i++){glDeleteShader(shade_list[i]);}
   }
   return program;
 }
-                                                                                                                                                                       141,1         93%
-                                                                                                                                                                         96,1          47%
-                                                                                                                                                                         1,1           Top
